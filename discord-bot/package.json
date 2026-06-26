@@ -1,0 +1,14 @@
+{
+  "name": "sapporo-quest-discord-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "register": "node register-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理画面 - 札幌クエスト</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --border: #e5e5ea;
+  --blue: #007aff;
+  --red: #ff3b30;
+  --green: #06C755;
+  --orange: #ff9500;
+}
+
+body {
+  font-family: 'Noto Sans JP', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Header */
+.admin-header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.admin-header h1 { font-size: 17px; font-weight: 700; }
+.admin-header a {
+  font-size: 13px; color: var(--blue);
+  text-decoration: none;
+}
+
+/* Content */
+.admin-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.toolbar h2 { font-size: 15px; font-weight: 700; color: var(--text2); }
+
+.btn-new {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--blue);
+  color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+}
+.btn-new:hover { opacity: 0.85; }
+
+/* Guild cards */
+.admin-guild-list { display: flex; flex-direction: column; gap: 10px; }
+
+.admin-guild-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.admin-guild-info { flex: 1; min-width: 0; }
+.admin-guild-title { font-size: 15px; font-weight: 700; }
+.admin-guild-meta {
+  margin-top: 6px;
+  font-size: 13px; color: var(--text2);
+  display: flex; flex-wrap: wrap; gap: 4px 12px;
+}
+.admin-guild-status {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  margin-top: 6px;
+}
+.status-published { background: #e8f8ee; color: var(--green); }
+.status-draft { background: #f0f0f0; color: var(--text3); }
+.status-cancelled { background: #fff0f0; color: var(--red); }
+
+.admin-guild-actions {
+  display: flex; flex-direction: column; gap: 6px;
+  flex-shrink: 0;
+}
+.btn-edit, .btn-delete {
+  border: none; border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.btn-edit { background: #f0f0f0; color: var(--text); }
+.btn-edit:hover { background: #e5e5e5; }
+.btn-delete { background: #fff0f0; color: var(--red); }
+.btn-delete:hover { background: #ffe0e0; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.4);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: var(--card);
+  border-radius: 16px;
+  width: 100%; max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-size: 17px; font-weight: 700; }
+.modal-close {
+  background: none; border: none;
+  font-size: 20px; color: var(--text3);
+  cursor: pointer; padding: 4px;
+}
+.modal-body { padding: 20px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 13px; font-weight: 600; color: var(--text2);
+  margin-bottom: 6px;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--card);
+  color: var(--text);
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+.btn-save {
+  background: var(--blue);
+  color: #fff;
+  border: none; border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+}
+.btn-save:hover { opacity: 0.85; }
+.btn-save:disabled { opacity: 0.5; }
+.btn-modal-cancel {
+  background: var(--bg);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+}
+
+.empty-admin {
+  text-align: center; padding: 48px 20px; color: var(--text3); font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <h1>札幌クエスト 管理画面</h1>
+  <a href="/">← ユーザー画面</a>
+</div>
+
+<div class="admin-content">
+  <div class="toolbar">
+    <h2>ギルド会一覧</h2>
+    <button class="btn-new" id="btn-new-guild">+ 新規作成</button>
+  </div>
+  <div id="guild-list" class="admin-guild-list">
+    <div class="empty-admin">読み込み中...</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">新規ギルド会</h3>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>タイトル</label>
+        <input type="text" id="f-title" placeholder="例：第13回ギルド会">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>日時</label>
+          <input type="datetime-local" id="f-date">
+        </div>
+        <div class="form-group">
+          <label>ステータス</label>
+          <select id="f-status">
+            <option value="published">公開</option>
+            <option value="draft">下書き</option>
+            <option value="cancelled">キャンセル</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>場所</label>
+        <input type="text" id="f-location" placeholder="例：es 個室">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>参加費（円）</label>
+          <input type="number" id="f-fee" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>定員（0=無制限）</label>
+          <input type="number" id="f-max" value="0" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>説明</label>
+        <textarea id="f-desc" placeholder="任意"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" id="btn-cancel-modal">キャンセル</button>
+      <button class="btn-save" id="btn-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js';
+import {
+  getFirestore, collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc,
+  query, orderBy, serverTimestamp, Timestamp
+} from 'https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js';
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const guildsRef = collection(db, 'guilds');
+
+let allGuilds = [];
+let editingId = null;
+
+const listEl = document.getElementById('guild-list');
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const btnSave = document.getElementById('btn-save');
+
+function formatDate(ts) {
+  const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  const h = String(d.getHours()).padStart(2,'0');
+  const min = String(d.getMinutes()).padStart(2,'0');
+  return `${m}/${day}（${wd}）${h}:${min}`;
+}
+
+function toLocalDatetime(ts) {
+  const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function loadGuilds() {
+  const snap = await getDocs(query(guildsRef, orderBy('date', 'asc')));
+  allGuilds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderList();
+}
+
+function renderList() {
+  if (allGuilds.length === 0) {
+    listEl.innerHTML = '<div class="empty-admin">ギルド会がありません</div>';
+    return;
+  }
+  listEl.innerHTML = allGuilds.map(g => {
+    const statusClass = g.status === 'published' ? 'status-published'
+      : g.status === 'cancelled' ? 'status-cancelled' : 'status-draft';
+    const statusLabel = g.status === 'published' ? '公開'
+      : g.status === 'cancelled' ? 'キャンセル' : '下書き';
+    return `
+      <div class="admin-guild-card">
+        <div class="admin-guild-info">
+          <div class="admin-guild-title">${g.title}</div>
+          <div class="admin-guild-meta">
+            <span>📅 ${formatDate(g.date)}</span>
+            <span>📍 ${g.location}</span>
+            <span>💰 ${g.fee > 0 ? '¥' + g.fee.toLocaleString() : '無料'}</span>
+            ${g.maxParticipants > 0 ? `<span>👥 ${g.maxParticipants}名</span>` : ''}
+          </div>
+          <div class="admin-guild-status ${statusClass}">${statusLabel}</div>
+        </div>
+        <div class="admin-guild-actions">
+          <button class="btn-edit" data-edit="${g.id}">編集</button>
+          <button class="btn-delete" data-delete="${g.id}">削除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openModal(guild) {
+  editingId = guild ? guild.id : null;
+  modalTitle.textContent = guild ? 'ギルド会を編集' : '新規ギルド会';
+
+  document.getElementById('f-title').value = guild ? guild.title : '';
+  document.getElementById('f-date').value = guild ? toLocalDatetime(guild.date) : '';
+  document.getElementById('f-location').value = guild ? guild.location : '';
+  document.getElementById('f-fee').value = guild ? guild.fee : 0;
+  document.getElementById('f-max').value = guild ? guild.maxParticipants : 0;
+  document.getElementById('f-desc').value = guild ? (guild.description || '') : '';
+  document.getElementById('f-status').value = guild ? guild.status : 'published';
+
+  modal.classList.add('active');
+}
+
+function closeModal() {
+  modal.classList.remove('active');
+  editingId = null;
+}
+
+async function saveGuild() {
+  const title = document.getElementById('f-title').value.trim();
+  const dateStr = document.getElementById('f-date').value;
+  const location = document.getElementById('f-location').value.trim();
+  const fee = parseInt(document.getElementById('f-fee').value) || 0;
+  const maxParticipants = parseInt(document.getElementById('f-max').value) || 0;
+  const description = document.getElementById('f-desc').value.trim();
+  const status = document.getElementById('f-status').value;
+
+  if (!title || !dateStr || !location) {
+    alert('タイトル、日時、場所は必須です');
+    return;
+  }
+
+  btnSave.disabled = true;
+  btnSave.textContent = '保存中...';
+
+  try {
+    const data = {
+      title, location, fee, maxParticipants, description, status,
+      date: Timestamp.fromDate(new Date(dateStr)),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (editingId) {
+      await updateDoc(doc(db, 'guilds', editingId), data);
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(guildsRef, data);
+    }
+
+    closeModal();
+    await loadGuilds();
+  } catch (e) {
+    alert('保存失敗: ' + (e.message || e));
+  } finally {
+    btnSave.disabled = false;
+    btnSave.textContent = '保存';
+  }
+}
+
+async function deleteGuild(id) {
+  const g = allGuilds.find(g => g.id === id);
+  if (!confirm(`「${g?.title || ''}」を削除しますか？`)) return;
+  try {
+    await deleteDoc(doc(db, 'guilds', id));
+    await loadGuilds();
+  } catch (e) {
+    alert('削除失敗: ' + (e.message || e));
+  }
+}
+
+// Events
+document.getElementById('btn-new-guild').addEventListener('click', () => openModal(null));
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+document.getElementById('btn-save').addEventListener('click', saveGuild);
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+listEl.addEventListener('click', (e) => {
+  const editBtn = e.target.closest('[data-edit]');
+  if (editBtn) {
+    const g = allGuilds.find(g => g.id === editBtn.dataset.edit);
+    if (g) openModal(g);
+    return;
+  }
+  const delBtn = e.target.closest('[data-delete]');
+  if (delBtn) {
+    deleteGuild(delBtn.dataset.delete);
+  }
+});
+
+loadGuilds();
+</script>
+</body>
+</html>

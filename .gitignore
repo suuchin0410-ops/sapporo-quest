@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+serviceAccountKey.json
+.DS_Store
+.firebase/
+
+# Next.js build output copied to public/
+web/public/_next/
+web/public/**/*.html
+web/public/**/*.txt
+web/out/
+web/.next/
+
+# Large rich menu PNGs (keep JPEGs only)
+web/functions/richmenu-*.png

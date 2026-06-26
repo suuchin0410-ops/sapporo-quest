@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>札幌クエスト</title>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://static.line-scdn.net">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --border: #e5e5ea;
+  --green: #06C755;
+  --green-hover: #05b34d;
+  --red: #ff3b30;
+  --blue: #007aff;
+  --orange: #ff9500;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* --- Loading Screen --- */
+#loading-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.3s;
+}
+#loading-screen.fade-out { opacity: 0; pointer-events: none; }
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--text2);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-text { margin-top: 12px; font-size: 13px; color: var(--text3); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- App Shell --- */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  text-align: center;
+}
+.app-header h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.app-content {
+  padding: 16px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* --- Guild Card --- */
+.guild-list { display: flex; flex-direction: column; gap: 12px; }
+
+.guild-card {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+.guild-card-body { padding: 20px; }
+
+.guild-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.badge-joined {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  background: #e8f8ee;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.guild-info {
+  margin-top: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.guild-info-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--text2);
+}
+.guild-info-icon {
+  width: 20px; text-align: center;
+  font-size: 15px; flex-shrink: 0;
+}
+
+/* Participant bar */
+.participant-bar-wrap { margin-top: 2px; }
+.participant-bar-bg {
+  height: 4px; border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.participant-bar-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.bar-green { background: var(--green); }
+.bar-orange { background: var(--orange); }
+.bar-red { background: var(--red); }
+
+/* Avatars */
+.guild-avatars {
+  display: flex; align-items: center;
+  gap: 0; margin-top: 14px;
+}
+.guild-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%; overflow: hidden;
+  border: 2px solid var(--card);
+  margin-left: -6px;
+  flex-shrink: 0;
+}
+.guild-avatar:first-child { margin-left: 0; }
+.guild-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.guild-avatar-placeholder {
+  width: 100%; height: 100%;
+  background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--text3);
+}
+.guild-avatar-more {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--text3);
+  margin-left: -6px; flex-shrink: 0;
+}
+
+.guild-desc {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+/* Buttons */
+.guild-action { margin-top: 18px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 48px;
+  border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-join {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(6,199,85,0.25);
+}
+.btn-join:active:not(:disabled) { background: var(--green-hover); }
+
+.btn-cancel {
+  background: var(--bg);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+
+.btn-disabled-msg {
+  height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text3);
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+}
+.btn-spinner-dark {
+  border-color: rgba(0,0,0,0.1);
+  border-top-color: var(--text2);
+}
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg) 25%, #ececee 50%, var(--bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+.empty-state-icon { font-size: 48px; opacity: 0.4; }
+.empty-state-text { margin-top: 12px; font-size: 14px; }
+
+/* Error */
+.error-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+.error-box {
+  display: inline-block;
+  background: #fff0f0;
+  border: 1px solid #ffd0d0;
+  border-radius: 12px;
+  padding: 20px 28px;
+  color: var(--red);
+  font-size: 14px;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 50%; transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 100px;
+  font-size: 14px; font-weight: 600;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+</style>
+
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js" charset="utf-8"></script>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-screen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">読み込み中...</div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+  <div class="app-header">
+    <h1>ギルド会予約</h1>
+  </div>
+  <div class="app-content">
+    <div id="guild-list" class="guild-list"></div>
+  </div>
+</div>
+
+<!-- Fallback (non-LINE) -->
+<div id="fallback" style="display:none">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;">
+    <h1 style="font-size:22px;font-weight:700;">札幌クエスト</h1>
+    <p style="margin-top:8px;color:var(--text3);font-size:14px;">LINEからアクセスしてください</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script type="module">
+import { firebaseConfig, liffConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  query, orderBy, serverTimestamp, Timestamp
+} from 'https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js';
+
+// --- Firebase init ---
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- State ---
+let liffProfile = null;
+let guilds = [];
+let participantsMap = {};
+let actioningId = null;
+
+// --- DOM refs ---
+const loadingScreen = document.getElementById('loading-screen');
+const appEl = document.getElementById('app');
+const fallbackEl = document.getElementById('fallback');
+const guildListEl = document.getElementById('guild-list');
+const toastEl = document.getElementById('toast');
+
+// --- Helpers ---
+function formatDate(ts) {
+  const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${month}/${day}（${wd}）${h}:${m}`;
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2500);
+}
+
+// --- LIFF Init ---
+async function initLIFF() {
+  if (!window.liff || !liffConfig.id) return false;
+  try {
+    await window.liff.init({ liffId: liffConfig.id });
+    if (window.liff.isLoggedIn()) {
+      liffProfile = await window.liff.getProfile();
+    }
+    return true;
+  } catch (e) {
+    console.warn('LIFF init skipped:', e.message);
+    return false;
+  }
+}
+
+// --- Data Fetching ---
+async function fetchGuilds() {
+  const snap = await getDocs(query(collection(db, 'guilds'), orderBy('date', 'asc')));
+  const now = Timestamp.now();
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(g => g.status === 'published' && g.date >= now);
+}
+
+async function fetchParticipants(guildId) {
+  const snap = await getDocs(query(
+    collection(db, 'guilds', guildId, 'participants'),
+    orderBy('joinedAt', 'asc')
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function joinGuild(guildId) {
+  if (!liffProfile) return;
+  const ref = doc(db, 'guilds', guildId, 'participants', liffProfile.userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+
+  const guild = guilds.find(g => g.id === guildId);
+  if (guild && guild.maxParticipants > 0) {
+    const ps = participantsMap[guildId] || [];
+    if (ps.length >= guild.maxParticipants) {
+      showToast('定員に達しています');
+      return;
+    }
+  }
+
+  await setDoc(ref, {
+    userId: liffProfile.userId,
+    displayName: liffProfile.displayName,
+    pictureUrl: liffProfile.pictureUrl || null,
+    joinedAt: serverTimestamp(),
+  });
+  showToast('参加しました！');
+}
+
+async function leaveGuild(guildId) {
+  if (!liffProfile) return;
+  await deleteDoc(doc(db, 'guilds', guildId, 'participants', liffProfile.userId));
+  showToast('キャンセルしました');
+}
+
+// --- Rendering ---
+function renderGuilds() {
+  if (guilds.length === 0) {
+    guildListEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-text">予定されているギルド会はありません</div>
+      </div>`;
+    return;
+  }
+
+  guildListEl.innerHTML = guilds.map(guild => {
+    const ps = participantsMap[guild.id] || null;
+    const count = ps ? ps.length : -1;
+    const isJoined = ps && liffProfile
+      ? ps.some(p => p.userId === liffProfile.userId)
+      : false;
+    const isFull = guild.maxParticipants > 0 && count >= guild.maxParticipants;
+    const fillRatio = guild.maxParticipants > 0 && count >= 0
+      ? Math.min(count / guild.maxParticipants, 1)
+      : 0;
+    const barClass = isFull ? 'bar-red' : fillRatio > 0.7 ? 'bar-orange' : 'bar-green';
+
+    let actionHTML = '';
+    if (isJoined) {
+      actionHTML = `<button class="btn btn-cancel" data-action="leave" data-id="${guild.id}">参加をキャンセル</button>`;
+    } else if (isFull) {
+      actionHTML = `<div class="btn-disabled-msg">定員に達しました</div>`;
+    } else if (!liffProfile) {
+      actionHTML = `<div class="btn-disabled-msg">LINEからアクセスしてください</div>`;
+    } else if (count < 0) {
+      actionHTML = `<div class="btn-disabled-msg"><span class="btn-spinner btn-spinner-dark"></span></div>`;
+    } else {
+      actionHTML = `<button class="btn btn-join" data-action="join" data-id="${guild.id}">参加する</button>`;
+    }
+
+    let avatarsHTML = '';
+    if (ps && ps.length > 0) {
+      const shown = ps.slice(0, 8);
+      avatarsHTML = '<div class="guild-avatars">'
+        + shown.map(p => {
+          if (p.pictureUrl) {
+            return `<div class="guild-avatar"><img src="${p.pictureUrl}" alt="" loading="lazy"></div>`;
+          }
+          return `<div class="guild-avatar"><div class="guild-avatar-placeholder">${(p.displayName || '?').charAt(0)}</div></div>`;
+        }).join('')
+        + (ps.length > 8 ? `<div class="guild-avatar-more">+${ps.length - 8}</div>` : '')
+        + '</div>';
+    }
+
+    const countText = count >= 0
+      ? `${count}${guild.maxParticipants > 0 ? ' / ' + guild.maxParticipants : ''}名参加`
+      : '';
+
+    const barHTML = guild.maxParticipants > 0 && count >= 0
+      ? `<div class="participant-bar-wrap"><div class="participant-bar-bg"><div class="participant-bar-fill ${barClass}" style="width:${fillRatio * 100}%"></div></div></div>`
+      : '';
+
+    return `
+      <div class="guild-card" data-guild-id="${guild.id}">
+        <div class="guild-card-body">
+          <div class="guild-title">
+            <span>${guild.title}</span>
+            ${isJoined ? '<span class="badge-joined">参加中 ✓</span>' : ''}
+          </div>
+          <div class="guild-info">
+            <div class="guild-info-row"><span class="guild-info-icon">📅</span><span>${formatDate(guild.date)}</span></div>
+            <div class="guild-info-row"><span class="guild-info-icon">📍</span><span>${guild.location}</span></div>
+            <div class="guild-info-row"><span class="guild-info-icon">💰</span><span>${guild.fee > 0 ? '¥' + guild.fee.toLocaleString() : '無料'}</span></div>
+            <div class="guild-info-row">
+              <span class="guild-info-icon">👥</span>
+              <div style="flex:1">
+                ${count >= 0 ? `<span>${countText}${isFull ? ' <span style="color:var(--red);font-weight:700;font-size:12px">満員</span>' : ''}</span>` : '<div class="skeleton" style="width:60px;height:16px"></div>'}
+                ${barHTML}
+              </div>
+            </div>
+          </div>
+          ${avatarsHTML}
+          ${guild.description ? `<div class="guild-desc">${guild.description}</div>` : ''}
+          <div class="guild-action">${actionHTML}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function setButtonLoading(guildId, loading) {
+  const card = document.querySelector(`.guild-card[data-guild-id="${guildId}"]`);
+  if (!card) return;
+  const btn = card.querySelector('.btn');
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading) {
+    btn.dataset.origText = btn.textContent;
+    btn.innerHTML = '<span class="btn-spinner"></span>処理中...';
+  } else {
+    btn.textContent = btn.dataset.origText || '';
+  }
+}
+
+// --- Event delegation ---
+guildListEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn || actioningId) return;
+
+  const action = btn.dataset.action;
+  const guildId = btn.dataset.id;
+  actioningId = guildId;
+  setButtonLoading(guildId, true);
+
+  try {
+    if (action === 'join') {
+      await joinGuild(guildId);
+    } else if (action === 'leave') {
+      if (!confirm('参加をキャンセルしますか？')) {
+        setButtonLoading(guildId, false);
+        actioningId = null;
+        return;
+      }
+      await leaveGuild(guildId);
+    }
+    participantsMap[guildId] = await fetchParticipants(guildId);
+    renderGuilds();
+  } catch (e) {
+    showToast('エラー: ' + (e.message || e));
+  } finally {
+    actioningId = null;
+  }
+});
+
+// --- Routing ---
+function shouldShowGuilds() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tab') === 'guilds') return true;
+
+  const liffState = params.get('liff.state');
+  if (liffState) {
+    const qp = liffState.includes('?') ? liffState.split('?')[1] : '';
+    if (qp) {
+      const sp = new URLSearchParams(qp);
+      if (sp.get('tab') === 'guilds') return true;
+    }
+    const path = liffState.split('?')[0].replace(/^\/+|\/+$/g, '');
+    if (path === 'guilds') return true;
+  }
+  return false;
+}
+
+// --- Boot ---
+async function boot() {
+  const showGuilds = shouldShowGuilds();
+
+  const [liffOk] = await Promise.all([
+    initLIFF(),
+    (async () => {
+      try {
+        guilds = await fetchGuilds();
+      } catch (e) {
+        console.error('Guild fetch error:', e);
+        guilds = [];
+      }
+    })()
+  ]);
+
+  const isInClient = liffOk && window.liff.isInClient();
+
+  if (!showGuilds && !isInClient) {
+    loadingScreen.classList.add('fade-out');
+    setTimeout(() => loadingScreen.style.display = 'none', 300);
+    fallbackEl.style.display = 'block';
+    return;
+  }
+
+  renderGuilds();
+  appEl.style.display = 'block';
+  loadingScreen.classList.add('fade-out');
+  setTimeout(() => loadingScreen.style.display = 'none', 300);
+
+  // Load participants in background
+  await Promise.all(guilds.map(async g => {
+    try {
+      participantsMap[g.id] = await fetchParticipants(g.id);
+    } catch (e) {
+      console.warn('Participant fetch error for', g.id, e);
+    }
+  }));
+  renderGuilds();
+}
+
+boot().catch(e => {
+  console.error('Boot error:', e);
+  loadingScreen.querySelector('.loading-text').textContent = 'エラーが発生しました';
+});
+</script>
+</body>
+</html>

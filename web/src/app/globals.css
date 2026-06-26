@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --background: #1a1a2e;
+  --foreground: #e8d5b0;
+  --gold: #d4a843;
+  --gold-light: #f0d080;
+  --gold-dim: #a07830;
+  --stone: #2a2a3e;
+  --stone-light: #3a3a52;
+  --stone-border: #4a4a60;
+  --red-accent: #c0392b;
+  --green-action: #2d8a4e;
+  --green-action-hover: #24703f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dim: var(--gold-dim);
+  --color-stone: var(--stone);
+  --color-stone-light: var(--stone-light);
+  --color-stone-border: var(--stone-border);
+  --color-red-accent: var(--red-accent);
+  --color-green-action: var(--green-action);
+  --color-green-action-hover: var(--green-action-hover);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.rpg-card {
+  background: linear-gradient(145deg, #2a2a3e, #22223a);
+  border: 1px solid var(--gold-dim);
+  box-shadow: 0 0 12px rgba(212, 168, 67, 0.08), inset 0 1px 0 rgba(212, 168, 67, 0.06);
+}
+
+.rpg-input {
+  background: #22223a;
+  border: 1px solid var(--stone-border);
+  color: var(--foreground);
+  transition: border-color 0.2s;
+}
+.rpg-input::placeholder {
+  color: #6a6a80;
+}
+.rpg-input:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.15);
+}
+
+.rpg-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}

@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev Server (web)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "cwd": "web"
+    },
+    {
+      "name": "Discord Bot",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["index.js"],
+      "port": 0,
+      "cwd": "discord-bot"
+    }
+  ]
+}
