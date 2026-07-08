@@ -36,3 +36,40 @@ Minnie で仕上げレビュー（取りこぼしチェック）
 ```
 
 ※どちらのClaudeも、必要に応じてもう一方の役割を兼ねてOK。ただし**デフォルトの立ち位置**は上記の通り。
+
+## ユーザーの作業スタイル
+- 確認なしでどんどん進めてほしい（自律的に実装・デプロイまで完了させる）
+- UIの変更はdev serverで動作確認してから完了とする
+
+## 技術スタック
+- **Web**: Next.js 16 (App Router, Turbopack) + Tailwind CSS
+- **Backend**: Firebase (Hosting, Firestore, Cloud Functions)
+- **LINE**: LIFF SDK, Messaging API (Rich Menu)
+- **Discord**: discord.js Bot
+- **デプロイ**: `npm run build` → `cp -R out/* public/` → `firebase deploy --only hosting`
+
+## LIFF タブルーティング
+- ルートの `web/src/app/page.tsx` で `?tab=` パラメータをパースし、各タブコンポーネントへ振り分け
+- 有効なタブ: `guilds`, `register`, `discord`, `mypage`, `members`
+- 実際にユーザーが見るUIは `*Content.tsx` コンポーネント（`/liff/*` のスタンドアロンページではない）
+
+## テーマ・デザイン
+- **LIFF（ユーザー向け）**: RPGダークテーマ（`bg-background #1a1a2e`, `text-gold`, `rpg-card` 等）
+- **管理画面**: stone/red カラースキーム
+
+## リッチメニュー
+- タブ式切り替え（メイン⇔サブ）、エイリアス使用
+- セットアップ: `web/functions/setup-richmenu.js`
+- メインメニュー: ギルド会予約 / マイページ / Discord / メンバー一覧
+- サブメニュー: 公式HP / YouTube / スケジュール(Google Calendar) / 利用規約
+- 画像は2500x1686px, JPEG 1MB以下
+
+## 重要なURL・ID
+- Hosting: https://sapporo-quest-ae36a.web.app
+- Google Calendar ID: `sapporo.quest.ai@gmail.com`
+- YouTube: https://www.youtube.com/@SapporoQuest
+
+## 過去の失敗から学んだこと
+- LIFFのタブルーティング: `page.tsx` の `TABS` セットに新しいタブ名を追加し忘れるとデフォルトタブにフォールバックする
+- ギルドページの編集: ユーザーが見るのは `GuildsContent.tsx`（タブ経由）であり、`/liff/guilds/page.tsx`（スタンドアロン）ではない
+- リッチメニュー画像: LINE APIは1MB以下を要求。PNGは大きくなりがちなのでJPEG quality 70で圧縮
